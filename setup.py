@@ -427,23 +427,23 @@ def get_pkg_info_version(pkg_info_file):
 
 def get_version() -> str:
     version   = "0.11.0"
-    pkg_info  = os.path.join(CURRENT_DIR, "{}.egg-info".format(PACKAGE_NAME), "PKG-INFO")
-    git_dir   = os.path.join(CURRENT_DIR, ".git")
-    if os.path.isdir(git_dir):
-        is_tagged = False
-        try:
-            is_tagged = check_if_tagged()
-        except Exception:
-            is_tagged = False
-
-        try:
-            return get_git_version(is_tagged)
-        except Exception:
-            pass
-
-    if os.path.isfile(pkg_info):
-        return get_pkg_info_version(pkg_info)
-
+#    pkg_info  = os.path.join(CURRENT_DIR, "{}.egg-info".format(PACKAGE_NAME), "PKG-INFO")
+#    git_dir   = os.path.join(CURRENT_DIR, ".git")
+#    if os.path.isdir(git_dir):
+#        is_tagged = False
+#        try:
+#            is_tagged = check_if_tagged()
+#        except Exception:
+#            is_tagged = False
+#
+#        try:
+#            return get_git_version(is_tagged)
+#        except Exception:
+#            pass
+#
+#    if os.path.isfile(pkg_info):
+#        return get_pkg_info_version(pkg_info)
+#
     return version
 
 version = get_version()

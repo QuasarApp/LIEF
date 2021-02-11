@@ -11,19 +11,12 @@ include(CheckCXXCompilerFlag)
 include(CheckCCompilerFlag)
 include(ExternalProject)
 include(CMakePackageConfigHelpers)
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git"
-   AND IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
-  find_package(Git REQUIRED)
-
-  # Information from git
-  # ====================
-  include(LIEFGit)
-else()
-  set(LIEF_VERSION_MAJOR "0")
-  set(LIEF_VERSION_MINOR "11")
-  set(LIEF_VERSION_PATCH "0")
-endif()
+set(LIEF_GIT_TAG "0.11.0")
+set(LIEF_IS_TAGGED TRUE)
+set(LIEF_COMMIT_HASH "f58605f")
+set(LIEF_VERSION_MAJOR "0")
+set(LIEF_VERSION_MINOR "11")
+set(LIEF_VERSION_PATCH "0")
 
 # LIEF Project
 # ============
