@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <fstream>
 #include <utility>
 #include <algorithm>
 #include <iterator>
@@ -1058,8 +1059,8 @@ std::vector<uint8_t> Binary::authentihash(ALGORITHMS algo) const {
   }
   const size_t sizeof_ptr = this->type_ == PE_TYPE::PE32 ? sizeof(uint32_t) : sizeof(uint64_t);
   const hashstream::HASH hash_type = it_hash->second;
-  hashstream ios(hash_type);
-  //vector_iostream ios;
+  //hashstream ios(hash_type);
+  vector_iostream ios;
   ios // Hash dos header
     .write(this->dos_header_.magic())
     .write(this->dos_header_.used_bytes_in_the_last_page())
@@ -1166,8 +1167,7 @@ std::vector<uint8_t> Binary::authentihash(ALGORITHMS algo) const {
 
   // Sort by file offset
   std::sort(
-      std::begin(sections),
-      std::end(sections),
+      std::begin(sections), std::end(sections),
       [] (const Section* lhs, const Section* rhs) {
         return  lhs->pointerto_raw_data() < rhs->pointerto_raw_data();
     });
@@ -1176,7 +1176,7 @@ std::vector<uint8_t> Binary::authentihash(ALGORITHMS algo) const {
   for (const Section* sec : sections) {
     const std::vector<uint8_t>& pad     = sec->padding();
     const std::vector<uint8_t>& content = sec->content();
-    LIEF_DEBUG("Authentihash:  Append section {:<8}: [0x{:04x}, 0x{:04x}] + [0x{:04x}] = [0x{:04x}, 0x{:04x}]",
+    LIEF_ERR("Authentihash:  Append section {:<10}: [0x{:06x}, 0x{:06x}] + [0x{:06x}] = [0x{:06x}, 0x{:06x}]",
         sec->name(),
         sec->offset(), sec->offset() + content.size(), pad.size(),
         sec->offset(), sec->offset() + content.size() + pad.size());
@@ -1200,31 +1200,34 @@ std::vector<uint8_t> Binary::authentihash(ALGORITHMS algo) const {
   }
   if (this->overlay_.size() > 0) {
     const DataDirectory& cert_dir = this->data_directory(DATA_DIRECTORY::CERTIFICATE_TABLE);
-    LIEF_DEBUG("Add overlay and omit 0x{:08x} - 0x{:08x}", cert_dir.RVA(), cert_dir.RVA() + cert_dir.size());
-    if (cert_dir.RVA() > 0 and cert_dir.size() > 0) {
+    LIEF_ERR("Add overlay and omit 0x{:08x} - 0x{:08x}", cert_dir.RVA(), cert_dir.RVA() + cert_dir.size());
+    if (cert_dir.RVA() > 0 and cert_dir.size() > 0 and cert_dir.RVA() >= this->overlay_offset_) {
       const uint64_t start_cert_offset = cert_dir.RVA() - this->overlay_offset_;
       const uint64_t end_cert_offset   = start_cert_offset + cert_dir.size();
-      LIEF_DEBUG("Add [0x{:x}, 0x{:x}]", this->overlay_offset_, this->overlay_offset_ + start_cert_offset);
-      LIEF_DEBUG("Add [0x{:x}, 0x{:x}]",
-          this->overlay_offset_ + end_cert_offset, this->overlay_offset_ + this->overlay_.size() - end_cert_offset);
+      LIEF_ERR("Add [0x{:06x}, 0x{:06x}]", this->overlay_offset_, this->overlay_offset_ + start_cert_offset);
+      LIEF_ERR("Add [0x{:06x}, 0x{:06x}]",
+          this->overlay_offset_ + end_cert_offset,
+          this->overlay_offset_ + this->overlay_.size() - end_cert_offset);
       ios
         .write(this->overlay_.data(), start_cert_offset)
         .write(this->overlay_.data() + end_cert_offset, this->overlay_.size() - end_cert_offset);
+    } else {
+      ios.write(this->overlay());
     }
   }
   //ios.write(this->overlay_);
   // When something gets wrong with the hash:
-  // std::vector<uint8_t> out = ios.raw();
-  // std::ofstream output_file{"/tmp/hash.blob", std::ios::out | std::ios::binary | std::ios::trunc};
-  // if (output_file) {
-  //   std::copy(
-  //       std::begin(out),
-  //       std::end(out),
-  //       std::ostreambuf_iterator<char>(output_file));
-  // }
-  // std::vector<uint8_t> hash = hashstream(hash_type).write(out).raw();
+   std::vector<uint8_t> out = ios.raw();
+   std::ofstream output_file{"/tmp/hash.blob", std::ios::out | std::ios::binary | std::ios::trunc};
+   if (output_file) {
+     std::copy(
+         std::begin(out),
+         std::end(out),
+         std::ostreambuf_iterator<char>(output_file));
+   }
+   std::vector<uint8_t> hash = hashstream(hash_type).write(out).raw();
 
-  std::vector<uint8_t> hash = ios.raw();
+  //std::vector<uint8_t> hash = ios.raw();
   LIEF_DEBUG("{}", hex_dump(hash));
   return hash;
 }
