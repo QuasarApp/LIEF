@@ -108,7 +108,7 @@ void Parser::parse_data_directories(void) {
   }
 
   this->binary_->data_directories_.reserve(nbof_datadir);
-  for (size_t i = 0; i < nbof_datadir; ++i) {
+  for (size_t i = 0; i < (nbof_datadir + 1); ++i) {
     std::unique_ptr<DataDirectory> directory{new DataDirectory{&data_directory[i], static_cast<DATA_DIRECTORY>(i)}};
     LIEF_DEBUG("Processing directory #{:d} ()", i, to_string(static_cast<DATA_DIRECTORY>(i)));
     LIEF_DEBUG("  - RVA:  0x{:04x}", data_directory[i].RelativeVirtualAddress);
